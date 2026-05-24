@@ -21,7 +21,7 @@ This project was built with strict adherence to real-time audio constraints, pri
 * **Asynchronous Disk I/O:** Streams live 32-bit float audio directly to a `.wav` file on disk without interrupting the audio thread.
 * **TUI Oscilloscope & Spectrum Analyzer:** Real-time visual feedback of time-domain (Waveform) and frequency-domain (EQ) data directly in the terminal.
 
-##🎮 Controls (Home Row Mapping)
+## 🎮 Controls (Home Row Mapping)
 Make sure your terminal is focused. Notes are mapped to the Shuddha and Komal intervals of Raag Bhairav.
 Key | Action / Note | Frequency(Hz)<br>
 A       Sa (C4)           261.63<br>
@@ -33,7 +33,7 @@ H       Komal Dha (Ab4)   415.30<br>
 J       Shuddha Ni (B4)   493.88<br>
 K       Sa' (C5)          523.25
 
-##System Toggles
+## System Toggles
 >1, 2, 3 - Switch Timbre (Sine, Square, Sawtooth)
 >T - Toggle Generative Tanpura Drone
 >V - Toggle LFO Low-Pass Filter
@@ -42,7 +42,7 @@ K       Sa' (C5)          523.25
 >R - Start/Stop WAV Recording (Saves as synth_recording.wav)
 >ESC - Gracefully exit and release audio streams.
 
-##🎤 Vocal Pitch Tracker
+## 🎤 Vocal Pitch Tracker
 Upon launching, the engine will request microphone permissions. Sing into your microphone, and the engine will run a high-resolution FFT over your vocal input, tracking your fundamental pitch and snapping it to the closest interval in the Bhairav scale.
 
 
