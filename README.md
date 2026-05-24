@@ -21,15 +21,6 @@ This project was built with strict adherence to real-time audio constraints, pri
 * **Asynchronous Disk I/O:** Streams live 32-bit float audio directly to a `.wav` file on disk without interrupting the audio thread.
 * **TUI Oscilloscope & Spectrum Analyzer:** Real-time visual feedback of time-domain (Waveform) and frequency-domain (EQ) data directly in the terminal.
 
-## 🛠️ Installation & Usage
-
-**Prerequisites:** Ensure you have [Rust and Cargo](https://rustup.rs/) installed. *(Linux users may need `libasound2-dev` for ALSA MIDI support).*
-
-```bash
-git clone [https://github.com/yourusername/bhairav-synth-os.git](https://github.com/yourusername/bhairav-synth-os.git)
-cd bhairav-synth-os
-cargo run --release
-
 ##🎮 Controls (Home Row Mapping)
 Make sure your terminal is focused. Notes are mapped to the Shuddha and Komal intervals of Raag Bhairav.
 Key | Action / Note | Frequency(Hz)
@@ -54,6 +45,12 @@ K       Sa' (C5)          523.25
 ##🎤 Vocal Pitch Tracker
 Upon launching, the engine will request microphone permissions. Sing into your microphone, and the engine will run a high-resolution FFT over your vocal input, tracking your fundamental pitch and snapping it to the closest interval in the Bhairav scale.
 
-##👨‍💻 Author
-Uday Sutradhar
-Systems Engineering | AI/ML | Audio Processing
+
+## 🛠️ Installation & Usage
+
+**Prerequisites:** Ensure you have [Rust and Cargo](https://rustup.rs/) installed. *(Linux users may need `libasound2-dev` for ALSA MIDI support).*
+
+```bash
+git clone [https://github.com/yourusername/bhairav-synth-os.git](https://github.com/yourusername/bhairav-synth-os.git)
+cd bhairav-synth-os
+cargo run --release
