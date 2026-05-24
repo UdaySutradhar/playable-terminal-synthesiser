@@ -21,16 +21,12 @@ use std::{
 const MAX_VOICES: usize = 12;
 const WAVEFORM_SIZE: usize = 256; 
 const CHUNK_SIZE: usize = 1024;
+const MIC_FFT_SIZE: usize = 4096; 
 
 // --- 1. System Enums & State ---
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum VoiceId {
-    Key(char),
-    Midi(u8),
-    Drone(char),
-    Metronome, // NEW: Dedicated ID for our BPM click
-}
+enum VoiceId { Key(char), Midi(u8), Drone(char), Metronome }
 
 #[derive(Clone)]
 struct UiState {
@@ -47,28 +43,16 @@ struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            voice_levels: [0.0; MAX_VOICES],
-            waveform: [0.0; WAVEFORM_SIZE],
-            wave_idx: 0,
-            is_recording: false,
-            is_filter_on: false,
-            is_tanpura_on: false,
-            is_bpm_on: false,
-            bpm: 120,
+            voice_levels: [0.0; MAX_VOICES], waveform: [0.0; WAVEFORM_SIZE], wave_idx: 0,
+            is_recording: false, is_filter_on: false, is_tanpura_on: false, is_bpm_on: false, bpm: 120,
         }
     }
 }
 
-enum AudioCommand {
-    NoteOn(VoiceId, f32),
-    NoteOff(VoiceId),
-    SetWaveform(Waveform),
-    ToggleFilter,
-}
-
+enum AudioCommand { NoteOn(VoiceId, f32), NoteOff(VoiceId), SetWaveform(Waveform), ToggleFilter, ToggleRecord }
 enum RecordMsg { Start(u32), Audio([f32; CHUNK_SIZE]), Stop }
 
-// --- 2. Modular Architecture ---
+// --- 2. Modular Architecture & DSP ---
 
 trait AudioNode: Send { fn process(&mut self, input: f32, sample_rate: f32) -> f32; }
 
@@ -86,9 +70,7 @@ impl AudioNode for LfoFilter {
 
 struct RingBufferDelay { buffer: Vec<f32>, write_idx: usize, feedback: f32 }
 impl RingBufferDelay {
-    fn new(sr: f32, ms: f32, fb: f32) -> Self { 
-        Self { buffer: vec![0.0; ((sr * ms) / 1000.0).max(1.0) as usize], write_idx: 0, feedback: fb } 
-    }
+    fn new(sr: f32, ms: f32, fb: f32) -> Self { Self { buffer: vec![0.0; ((sr * ms) / 1000.0).max(1.0) as usize], write_idx: 0, feedback: fb } }
 }
 impl AudioNode for RingBufferDelay {
     fn process(&mut self, input: f32, _sr: f32) -> f32 {
@@ -98,8 +80,6 @@ impl AudioNode for RingBufferDelay {
         input + (delayed * 0.5)
     }
 }
-
-// --- 3. DSP Core ---
 
 #[derive(Clone, Copy, PartialEq)]
 enum Waveform { Sine, Square, Sawtooth }
@@ -116,13 +96,11 @@ impl Voice {
         if self.state == EnvState::Idle { return 0.0; }
         match self.state {
             EnvState::Attack => {
-                // Make the metronome attack incredibly fast so it clicks
                 let attack_time = if self.id == VoiceId::Metronome { 0.002 } else { 0.01 };
                 self.env_level += 1.0 / (attack_time * sample_rate);
                 if self.env_level >= 1.0 { self.env_level = 1.0; self.state = EnvState::Decay; }
             }
             EnvState::Decay => {
-                // Make the metronome decay incredibly fast (staccato)
                 let decay_time = if self.id == VoiceId::Metronome { 0.05 } else { 1.5 };
                 self.env_level -= 1.0 / (decay_time * sample_rate);
                 if self.env_level <= 0.0 { self.env_level = 0.0; self.state = EnvState::Idle; }
@@ -139,7 +117,7 @@ impl Voice {
     }
 }
 
-// --- 4. Main System Run ---
+// --- 3. Main System Setup ---
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let host = cpal::default_host();
@@ -150,6 +128,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ui_state = Arc::new(Mutex::new(UiState::default()));
     let (tx, rx) = unbounded();
     let (rec_tx, rec_rx) = bounded(50);
+    
+    let (mic_tx, mic_rx) = bounded::<Vec<f32>>(2);
+
+    // Microphone Input Stream
+    let mic_device = host.default_input_device().expect("No input device (microphone) found.");
+    let mic_config = mic_device.default_input_config()?;
+    let mic_channels = mic_config.channels() as usize;
+    let mic_sample_rate = mic_config.sample_rate().0 as f32;
+
+    let mut mic_buffer = vec![0.0; MIC_FFT_SIZE];
+    let mut mic_idx = 0;
+    
+    let mic_stream = mic_device.build_input_stream(
+        &mic_config.into(),
+        move |data: &[f32], _: &cpal::InputCallbackInfo| {
+            for chunk in data.chunks(mic_channels) {
+                mic_buffer[mic_idx] = chunk[0];
+                mic_idx += 1;
+                if mic_idx == MIC_FFT_SIZE {
+                    let _ = mic_tx.try_send(mic_buffer.clone());
+                    mic_idx = 0;
+                }
+            }
+        },
+        |err| eprintln!("Mic stream error: {}", err),
+        None,
+    )?;
+    mic_stream.play()?;
 
     // THREAD: Disk I/O WAV Writer
     thread::spawn(move || {
@@ -182,7 +188,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    // --- NEW THREAD: BPM Clock / Metronome ---
+    // THREAD: BPM Clock / Metronome
     let bpm_active = Arc::new(AtomicBool::new(false));
     let current_bpm = Arc::new(AtomicU32::new(120));
     let b_active_clone = bpm_active.clone();
@@ -192,16 +198,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     thread::spawn(move || {
         loop {
             if b_active_clone.load(Ordering::Relaxed) {
-                let bpm = b_val_clone.load(Ordering::Relaxed).max(30); // Prevent divide by zero
-                let interval_ms = 60_000 / bpm;
-
-                // Send a high-pitched click (A5 = 880Hz)
+                let interval_ms = 60_000 / b_val_clone.load(Ordering::Relaxed).max(30);
                 let _ = tx_bpm.send(AudioCommand::NoteOn(VoiceId::Metronome, 880.0));
-                
                 thread::sleep(Duration::from_millis(interval_ms as u64));
-            } else {
-                thread::sleep(Duration::from_millis(50));
-            }
+            } else { thread::sleep(Duration::from_millis(50)); }
         }
     });
 
@@ -228,7 +228,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    // AUDIO THREAD
+    // AUDIO OUTPUT THREAD
     let ui_clone = Arc::clone(&ui_state);
     let mut voices = vec![Voice::new(); MAX_VOICES];
     let mut active_waveform = Waveform::Sine;
@@ -257,6 +257,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     AudioCommand::SetWaveform(w) => active_waveform = w,
                     AudioCommand::ToggleFilter => filter_on = !filter_on,
+                    AudioCommand::ToggleRecord => {
+                        recording_on = !recording_on;
+                        if recording_on { let _ = rec_tx.try_send(RecordMsg::Start(sample_rate as u32)); } 
+                        else { let _ = rec_tx.try_send(RecordMsg::Stop); }
+                    }
                 }
             }
 
@@ -303,18 +308,77 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
     let mut fft_planner = FftPlanner::new();
 
+    let bhairav_scale = [
+        ("Sa (C4)", 261.63), ("Re_k (Db4)", 277.18), ("Ga (E4)", 329.63),
+        ("Ma (F4)", 349.23), ("Pa (G4)", 392.00), ("Dha_k (Ab4)", 415.30),
+        ("Ni (B4)", 493.88), ("Sa' (C5)", 523.25)
+    ];
+
+    let mut smoothed_freq = 0.0; 
+    let mut hold_frames = 0;
+
     loop {
+        let mut latest_mic_chunk: Option<Vec<f32>> = None;
+        while let Ok(buf) = mic_rx.try_recv() { latest_mic_chunk = Some(buf); }
+
+        let mut closest_note = "None";
+
+        if let Some(buf) = latest_mic_chunk {
+            let fft = fft_planner.plan_fft_forward(MIC_FFT_SIZE);
+            let mut fft_buffer: Vec<Complex<f32>> = buf.iter().map(|&v| Complex { re: v, im: 0.0 }).collect();
+            fft.process(&mut fft_buffer);
+
+            let mut max_mag = 0.0;
+            let mut max_bin = 0;
+            
+            let min_bin = (80.0 * MIC_FFT_SIZE as f32 / mic_sample_rate) as usize;
+            let max_bin_search = (1000.0 * MIC_FFT_SIZE as f32 / mic_sample_rate) as usize;
+
+            for i in min_bin..=max_bin_search {
+                let mag = fft_buffer[i].re.powi(2) + fft_buffer[i].im.powi(2);
+                if mag > max_mag {
+                    max_mag = mag;
+                    max_bin = i;
+                }
+            }
+
+            // Hysteresis & Smoothing logic
+            if max_mag > 50.0 { 
+                let raw_freq = (max_bin as f32 * mic_sample_rate) / MIC_FFT_SIZE as f32;
+                if smoothed_freq == 0.0 {
+                    smoothed_freq = raw_freq;
+                } else {
+                    smoothed_freq = (smoothed_freq * 0.8) + (raw_freq * 0.2);
+                }
+                hold_frames = 20; 
+            }
+        }
+
+        if hold_frames > 0 {
+            hold_frames -= 1;
+            let mut min_dist = f32::MAX;
+            for (name, target_freq) in &bhairav_scale {
+                let dist = (smoothed_freq - target_freq).abs();
+                if dist < min_dist {
+                    min_dist = dist;
+                    closest_note = name;
+                }
+            }
+        } else {
+            smoothed_freq = 0.0;
+        }
+
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Length(4), Constraint::Min(8), Constraint::Length(8), Constraint::Length(8)])
+                .constraints([Constraint::Length(4), Constraint::Min(8), Constraint::Length(8), Constraint::Length(5)])
                 .split(f.size());
 
             let state = ui_state.lock().unwrap().clone();
 
             let header = Paragraph::new(format!(
                 "🎛️  Bhairav Synth OS | T: Tanpura ({}) | V: Filter ({}) | R: Record ({}) | ESC to Quit\n\
-                 B: Metronome ({}) | Tempo: [ decrease, ] increase ({} BPM)",
+                 B: Metronome ({}) | Tempo: [ (-5), ] (+5) ({} BPM)",
                  if state.is_tanpura_on { "ON" } else { "OFF" },
                  if state.is_filter_on { "ON" } else { "OFF" },
                  if state.is_recording { "REC" } else { "OFF" },
@@ -331,29 +395,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .y_axis(Axis::default().bounds([-1.0, 1.0]).labels(vec!["-1".into(), "0".into(), "1".into()]));
             f.render_widget(chart, chunks[1]);
 
-            let fft = fft_planner.plan_fft_forward(WAVEFORM_SIZE);
-            let mut fft_buffer: Vec<Complex<f32>> = state.waveform.iter().map(|&v| Complex { re: v, im: 0.0 }).collect();
-            fft.process(&mut fft_buffer);
-            
+            let eq_fft = fft_planner.plan_fft_forward(WAVEFORM_SIZE);
+            let mut eq_buffer: Vec<Complex<f32>> = state.waveform.iter().map(|&v| Complex { re: v, im: 0.0 }).collect();
+            eq_fft.process(&mut eq_buffer);
             let mut bands = [0.0; 8];
             for i in 1..128 { 
-                let mag = (fft_buffer[i].re.powi(2) + fft_buffer[i].im.powi(2)).sqrt();
+                let mag = (eq_buffer[i].re.powi(2) + eq_buffer[i].im.powi(2)).sqrt();
                 let bin = (i / 16).min(7);
                 bands[bin] += mag;
             }
-            
             let fft_labels = ["Sub", "Bass", "LoMid", "Mid", "HiMid", "Pres", "Treb", "Air"];
             let fft_bar_data: Vec<(&str, u64)> = bands.iter().enumerate()
                 .map(|(i, &mag)| (fft_labels[i], (mag * 2.0).min(100.0) as u64)).collect();
-            let fft_chart = BarChart::default().block(Block::default().title("Frequency Domain: FFT Spectrum Analyzer").borders(Borders::ALL))
+            let fft_chart = BarChart::default().block(Block::default().title("Frequency Domain: Master Output EQ").borders(Borders::ALL))
                 .data(&fft_bar_data).bar_width(6).bar_style(Style::default().fg(Color::Magenta)).value_style(Style::default().bg(Color::Magenta));
             f.render_widget(fft_chart, chunks[2]);
 
-            let v_labels = ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "T1", "BPM"];
-            let bar_data: Vec<(&str, u64)> = state.voice_levels.iter().enumerate().map(|(i, &lvl)| (v_labels[i], (lvl * 100.0) as u64)).collect();
-            let barchart = BarChart::default().block(Block::default().title("Polyphony Thread Pool").borders(Borders::ALL))
-                .data(&bar_data).bar_width(5).bar_style(Style::default().fg(Color::Green)).value_style(Style::default().bg(Color::Green));
-            f.render_widget(barchart, chunks[3]);
+            let tracker_text = if hold_frames > 0 {
+                format!("🎤 DETECTED PITCH: {:.1} Hz   |   CLOSEST BHAIRAV INTERVAL: {}", smoothed_freq, closest_note)
+            } else {
+                "🎤 Waiting for vocal input...".to_string()
+            };
+            
+            let tracker = Paragraph::new(tracker_text)
+                .style(Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL).title("Real-Time Vocal Pitch Tracker"));
+            f.render_widget(tracker, chunks[3]);
         })?;
 
         if poll(Duration::from_millis(16))? {
@@ -364,14 +432,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         KeyCode::Char('1') => { let _ = tx.send(AudioCommand::SetWaveform(Waveform::Sine)); }
                         KeyCode::Char('2') => { let _ = tx.send(AudioCommand::SetWaveform(Waveform::Square)); }
                         KeyCode::Char('3') => { let _ = tx.send(AudioCommand::SetWaveform(Waveform::Sawtooth)); }
-                        
                         KeyCode::Char('t') => { 
                             let current = tanpura_active.load(Ordering::Relaxed);
                             tanpura_active.store(!current, Ordering::Relaxed);
                             ui_state.lock().unwrap().is_tanpura_on = !current;
                         }
-                        
-                        // NEW BPM CONTROLS
                         KeyCode::Char('b') => { 
                             let current = bpm_active.load(Ordering::Relaxed);
                             bpm_active.store(!current, Ordering::Relaxed);
@@ -387,8 +452,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             current_bpm.store(new_bpm, Ordering::Relaxed);
                             ui_state.lock().unwrap().bpm = new_bpm;
                         }
-                        
                         KeyCode::Char('v') => { let _ = tx.send(AudioCommand::ToggleFilter); }
+                        KeyCode::Char('r') => { let _ = tx.send(AudioCommand::ToggleRecord); }
                         KeyCode::Char(c @ ('a'|'s'|'d'|'f'|'g'|'h'|'j'|'k')) => {
                             let freq = match c { 'a'=>261.63, 's'=>277.18, 'd'=>329.63, 'f'=>349.23, 'g'=>392.00, 'h'=>415.30, 'j'=>493.88, 'k'=>523.25, _=>0.0 };
                             let _ = tx.send(AudioCommand::NoteOn(VoiceId::Key(c), freq));
@@ -402,5 +467,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     stdout().execute(LeaveAlternateScreen)?;
     disable_raw_mode()?;
+    drop(mic_stream);
     Ok(())
 }
