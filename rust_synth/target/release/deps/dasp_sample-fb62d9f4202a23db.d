@@ -1,0 +1,10 @@
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/dasp_sample-fb62d9f4202a23db.d: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/conv.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/ops.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/types.rs
+
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/libdasp_sample-fb62d9f4202a23db.rlib: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/conv.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/ops.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/types.rs
+
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/libdasp_sample-fb62d9f4202a23db.rmeta: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/conv.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/ops.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/types.rs
+
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/lib.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/conv.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/ops.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dasp_sample-0.11.0/src/types.rs:

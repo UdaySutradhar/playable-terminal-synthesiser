@@ -1,0 +1,13 @@
+[package]
+name = "rust_synth"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cpal = "0.15.2"
+crossbeam-channel = "0.5.12"
+crossterm = "0.27.0"
+ratatui = "0.26.2"
+hound = "3.5.1"
+midir = "0.9.1"
+rustfft = "6.1.0"

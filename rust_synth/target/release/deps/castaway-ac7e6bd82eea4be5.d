@@ -1,0 +1,10 @@
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/castaway-ac7e6bd82eea4be5.d: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/internal.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lifetime_free.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/utils.rs
+
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/libcastaway-ac7e6bd82eea4be5.rlib: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/internal.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lifetime_free.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/utils.rs
+
+/Users/udaysutradhar/playable-terminal-synthesiser/rust_synth/target/release/deps/libcastaway-ac7e6bd82eea4be5.rmeta: /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lib.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/internal.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lifetime_free.rs /Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/utils.rs
+
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lib.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/internal.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/lifetime_free.rs:
+/Users/udaysutradhar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/castaway-0.2.4/src/utils.rs:
