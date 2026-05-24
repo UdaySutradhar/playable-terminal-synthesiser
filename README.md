@@ -29,26 +29,31 @@ This project was built with strict adherence to real-time audio constraints, pri
 git clone [https://github.com/yourusername/bhairav-synth-os.git](https://github.com/yourusername/bhairav-synth-os.git)
 cd bhairav-synth-os
 cargo run --release
-🎮 Controls (Home Row Mapping)
+
+##🎮 Controls (Home Row Mapping)
 Make sure your terminal is focused. Notes are mapped to the Shuddha and Komal intervals of Raag Bhairav.
 Key | Action / Note | Frequency(Hz)
 A       Sa (C4)           261.63
-SKomal Re (Db4)277.18
-DShuddha Ga (E4)329.63
-FShuddha Ma (F4)349.23
-GPa (G4)392.00
-HKomal Dha (Ab4)415.30
-JShuddha Ni (B4)493.88
-KSa' (C5)523.25
-System Toggles
-1, 2, 3 - Switch Timbre (Sine, Square, Sawtooth)
-T - Toggle Generative Tanpura Drone
-V - Toggle LFO Low-Pass Filter
-B - Toggle BPM Metronome Clock
-[ / ] - Decrease / Increase Tempo (BPM)
-R - Start/Stop WAV Recording (Saves as synth_recording.wav)
-ESC - Gracefully exit and release audio streams.
-🎤 Vocal Pitch Tracker
+S       Komal Re (Db4)    277.18
+D       Shuddha Ga (E4)   329.63
+F       Shuddha Ma (F4)   349.23
+G       Pa (G4)           392.00
+H       Komal Dha (Ab4)   415.30
+J       Shuddha Ni (B4)   493.88
+K       Sa' (C5)          523.25
+
+##System Toggles
+>1, 2, 3 - Switch Timbre (Sine, Square, Sawtooth)
+>T - Toggle Generative Tanpura Drone
+>V - Toggle LFO Low-Pass Filter
+>B - Toggle BPM Metronome Clock
+>[ / ] - Decrease / Increase Tempo (BPM)
+>R - Start/Stop WAV Recording (Saves as synth_recording.wav)
+>ESC - Gracefully exit and release audio streams.
+
+##🎤 Vocal Pitch Tracker
 Upon launching, the engine will request microphone permissions. Sing into your microphone, and the engine will run a high-resolution FFT over your vocal input, tracking your fundamental pitch and snapping it to the closest interval in the Bhairav scale.
-👨‍💻 AuthorUday Sutradhar
+
+##👨‍💻 Author
+Uday Sutradhar
 Systems Engineering | AI/ML | Audio Processing
