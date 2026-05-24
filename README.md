@@ -23,25 +23,15 @@ This project was built with strict adherence to real-time audio constraints, pri
 
 ##🎮 Controls (Home Row Mapping)
 Make sure your terminal is focused. Notes are mapped to the Shuddha and Komal intervals of Raag Bhairav.
-Key | Action / Note | Frequency(Hz)
-A       Sa (C4)           261.63
-S       Komal Re (Db4)    277.18
-D       Shuddha Ga (E4)   329.63
-F       Shuddha Ma (F4)   349.23
-G       Pa (G4)           392.00
-H       Komal Dha (Ab4)   415.30
-J       Shuddha Ni (B4)   493.88
+Key | Action / Note | Frequency(Hz)<br>
+A       Sa (C4)           261.63<br>
+S       Komal Re (Db4)    277.18<br>
+D       Shuddha Ga (E4)   329.63<br>
+F       Shuddha Ma (F4)   349.23<br>
+G       Pa (G4)           392.00<br>
+H       Komal Dha (Ab4)   415.30<br>
+J       Shuddha Ni (B4)   493.88<br>
 K       Sa' (C5)          523.25
-
-Key,Action / Note,Frequency (Hz)
-A,Sa (C4),261.63
-S,Komal Re (Db4),277.18
-D,Shuddha Ga (E4),329.63
-F,Shuddha Ma (F4),349.23
-G,Pa (G4),392.00
-H,Komal Dha (Ab4),415.30
-J,Shuddha Ni (B4),493.88
-K,Sa' (C5),523.25
 
 ##System Toggles
 >1, 2, 3 - Switch Timbre (Sine, Square, Sawtooth)
