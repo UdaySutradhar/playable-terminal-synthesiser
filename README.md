@@ -33,6 +33,16 @@ H       Komal Dha (Ab4)   415.30
 J       Shuddha Ni (B4)   493.88
 K       Sa' (C5)          523.25
 
+Key,Action / Note,Frequency (Hz)
+A,Sa (C4),261.63
+S,Komal Re (Db4),277.18
+D,Shuddha Ga (E4),329.63
+F,Shuddha Ma (F4),349.23
+G,Pa (G4),392.00
+H,Komal Dha (Ab4),415.30
+J,Shuddha Ni (B4),493.88
+K,Sa' (C5),523.25
+
 ##System Toggles
 >1, 2, 3 - Switch Timbre (Sine, Square, Sawtooth)
 >T - Toggle Generative Tanpura Drone
